@@ -1,4 +1,5 @@
 require 'sinatra'
+require 'open-uri'
 require 'uri'
 require 'digest/sha1'
 
@@ -29,14 +30,22 @@ get '/funkify' do
   end
 
   # Fetch the file
-  `wget #{uri.to_s} -O #{File.dirname(__FILE__)}/public/#{filename}-1.gif`
-    
-  # Reverse and concat
-  `convert #{File.dirname(__FILE__)}/public/#{filename}-1.gif -coalesce -reverse -quiet -layers OptimizePlus -loop 0 #{File.dirname(__FILE__)}/public/#{filename}-2.gif && convert #{File.dirname(__FILE__)}/public/#{filename}-1.gif -delete -1 #{File.dirname(__FILE__)}/public/#{filename}-2.gif -delete -1 #{File.dirname(__FILE__)}/public/#{filename}.gif`
+  `wget #{uri.to_s} -O #{File.dirname(__FILE__)}/public/#{filename}.gif`
 
-  # Remove the temp files
-  `rm #{File.dirname(__FILE__)}/public/#{filename}-1.gif`
-  `rm #{File.dirname(__FILE__)}/public/#{filename}-2.gif`
+  # Explode
+  `cd #{File.dirname(__FILE__)}/public && gifsicle -e #{filename}.gif`
+  exploded_files = Dir["#{File.dirname(__FILE__)}/public/#{filename}.*"]
+
+  # Create the command
+  command = "gifsicle --append #{File.dirname(__FILE__)}/public/#{filename}.gif"
+  (exploded_files.length-2).downto(1) do |x|
+    command = "#{command} #{File.dirname(__FILE__)}/public/#{filename}.gif.#{sprintf("%03d",x)}"
+  end
+
+  # Do it!
+  `#{command} > #{File.dirname(__FILE__)}/public/#{filename}.gif.tmp`
+  `mv #{File.dirname(__FILE__)}/public/#{filename}.gif.tmp #{File.dirname(__FILE__)}/public/#{filename}.gif`
+  `rm #{File.dirname(__FILE__)}/public/#{filename}.gif.*`
 
   "<img src='#{filename}.gif' />"
 end
