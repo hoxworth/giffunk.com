@@ -1,7 +1,11 @@
+require 'rubygems'
 require 'sinatra'
 require 'open-uri'
 require 'uri'
 require 'digest/sha1'
+require 'json'
+
+$imgur_client_id = "xxx"
 
 get '/' do
   erb :index
@@ -45,7 +49,14 @@ get '/funkify' do
   # Do it!
   `#{command} > #{File.dirname(__FILE__)}/public/#{filename}.gif.tmp`
   `mv #{File.dirname(__FILE__)}/public/#{filename}.gif.tmp #{File.dirname(__FILE__)}/public/#{filename}.gif`
-  `rm #{File.dirname(__FILE__)}/public/#{filename}.gif.*`
 
-  "<img src='#{filename}.gif' />"
+  # Upload to imgur
+  command = "curl -H \"Authorization: Client-ID #{$imgur_client_id}\" -F \"image=@#{File.dirname(__FILE__)}/public/#{filename}.gif\" https://api.imgur.com/3/image"
+  response = `#{command}`
+  data = JSON.parse(response)
+
+  redirect_url = "http://i.imgur.com/#{data["data"]["id"]}.gif"
+  `rm #{File.dirname(__FILE__)}/public/#{filename}.*`
+
+  "<meta http-equiv=\"refresh\" content=\"0; url=#{redirect_url}\">"
 end
