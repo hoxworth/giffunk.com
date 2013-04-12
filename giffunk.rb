@@ -21,7 +21,7 @@ get '/funkify' do
 
   filehash = Digest::SHA1.hexdigest(Time.now.to_f.to_s)
   filename = ''
-  
+
   1.upto(32) do |x|
     filename = filehash[0,x]
     if !File.exists?(File.dirname(__FILE__) + "/public/#{filename}.gif")
@@ -33,7 +33,7 @@ get '/funkify' do
   `wget #{uri.to_s} -O #{File.dirname(__FILE__)}/public/#{filename}.gif`
 
   # Explode
-  `cd #{File.dirname(__FILE__)}/public && gifsicle -e #{filename}.gif`
+  `cd #{File.dirname(__FILE__)}/public && gifsicle -e -U #{filename}.gif`
   exploded_files = Dir["#{File.dirname(__FILE__)}/public/#{filename}.*"]
 
   # Create the command
